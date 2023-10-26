@@ -90,7 +90,7 @@ class Perceptron:
                 self.converged = True
                 break
 
-    def plot_decision_boundary(self, z, x1, x2, label, y_pred, loss):
+    def plot_decision_boundary(self, z, x1, x2, l, y_pred, loss):
         fig, ax = plt.subplots()
 
         ax.set_xlim(-1, 2)
@@ -118,7 +118,7 @@ class Perceptron:
         ax.set_xlabel("X1")
         ax.set_ylabel("X2")
 
-        v = f'X1={x1}, X2={x2}, label={label}'
+        v = f'X1={x1}, X2={x2}, label={l}'
         z_formula = f'z = {self.weights[1]:.2f} * X1 + {self.weights[2]:.2f} * X2 + {self.weights[0]:.2f}'
         z_value = f'z = {z:.2f}'
         y_value = f'a = y_prediction = {y_pred}'
