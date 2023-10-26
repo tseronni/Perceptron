@@ -1,3 +1,6 @@
+# Copyright (c) 2023 Thiago Seronni Mendonça
+# Licensed under the MIT license. See the LICENSE file in the root directory for details.
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
