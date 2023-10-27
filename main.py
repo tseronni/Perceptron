@@ -57,19 +57,18 @@ class Perceptron:
 
                 loss_function = label - y_prediction
 
+                # Plot before update weights and bias
+                self.iterations += 1
+                self.plot_decision_boundary(z, inputs[0], inputs[1], label, y_prediction, loss_function)
                 # OBS1: Perceptron does not exist the concept of Gradient
                 # OBS2: Perceptron does not exist the concept of Backpropagation
                 # OBS3: Perceptron does not have an explicit Cost Function, because the weights are updated at each sample directly.
                 # (Remember that the Cost function is computed after an epoch and loss function is computed at each iteration)
                 # OBS4: The Cost Function will be an implicit idea as "The objective is to reduce the loss function"
-
                 self.weights[1:] = self.weights[1:] + (self.learning_rate * loss_function * inputs)     # update weights
                 self.weights[0] = self.weights[0] + (self.learning_rate * loss_function)                # update bias
 
                 errors = errors + abs(loss_function)
-
-                self.iterations += 1
-                self.plot_decision_boundary(z, inputs[0], inputs[1], label, y_prediction, loss_function)
 
                 d = 0
 
@@ -103,7 +102,10 @@ class Perceptron:
                 ax.scatter(inputs[0], inputs[1], color='black', marker='^', label='Class 1', s=75)
 
         # # Highlighting the current point
-        circle = plt.Circle((x1, x2), 0.1, color='blue', fill=False, linewidth=2)
+        if l == y_pred:
+            circle = plt.Circle((x1, x2), 0.1, color='blue', fill=False, linewidth=2)
+        else:
+            circle = plt.Circle((x1, x2), 0.1, color='red', fill=False, linewidth=2)
         ax.add_artist(circle)
 
         # Decision Boundary
@@ -111,16 +113,13 @@ class Perceptron:
         y_values = (-self.weights[1] * x_values - self.weights[0]) / self.weights[2]
         ax.plot(x_values, y_values, color='green', linestyle='--')
 
-        # Place the 'X' for y_prediction directly at x1 and x2 with increased size
-        ax.scatter(x1, y_pred, color='blue', marker='x', s=300, label='y_prediction')
-
         ax.set_title(f"Decision Boundary - Iteration {self.iterations} - Epoch {self.i_epoch}")
         ax.set_xlabel("X1")
         ax.set_ylabel("X2")
 
         v = f'X1={x1}, X2={x2}, label={l}'
-        z_formula = f'z = {self.weights[1]:.2f} * X1 + {self.weights[2]:.2f} * X2 + {self.weights[0]:.2f}'
-        z_value = f'z = {z:.2f}'
+        z_formula = f'z = {self.weights[1]:.4f} * X1 + {self.weights[2]:.4f} * X2 + {self.weights[0]:.4f}'
+        z_value = f'z = {z:.4f}'
         y_value = f'a = y_prediction = {y_pred}'
         loss_value = f'loss = label - y_prediction = {loss}'
         annotations = v + '\n' + z_formula + '\n' + z_value + '\n' + y_value + '\n' + loss_value
@@ -134,6 +133,8 @@ class Perceptron:
         handles, labels = ax.get_legend_handles_labels()
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         ax.legend(*zip(*unique))
+
+        # plt.savefig(f'iter_img_{self.iterations}.png', format='png', dpi=300)
 
         plt.show()
 
