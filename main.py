@@ -134,7 +134,7 @@ class Perceptron:
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         ax.legend(*zip(*unique))
 
-        # plt.savefig(f'iter_img_{self.iterations}.png', format='png', dpi=300)
+        plt.savefig(f'iter_img_{self.iterations}.png', format='png', dpi=300)
 
         plt.show()
 
