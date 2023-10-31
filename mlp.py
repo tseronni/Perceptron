@@ -87,21 +87,35 @@ class MLP:
                 loss_function = label - y_predict
 
                 # Delta output = loss_function * ActivationFunctionDerivative
+                # Delta is a measure of error in a specific layer (in output layer in this case)
+                # You can see Delta as the number that gives the magnitude to the gradient vector
+                # The Activation Derivative function is how sensitive a neuron's output is relative to weights
                 delta_output_layer = loss_function * self.sigmoid_derivative(y_predict)
 
-                self.output_weights = self.output_weights + (last_a * delta_output_layer * self.learning_rate)
-                self.output_weights[0] = self.output_weights[0] + (self.learning_rate * delta_output_layer)
+                # Gradient will be a vector that indicates the direction and magnitude to maximize the erro
+                # This is why we decrease the gradient when we are updating the weights
+                # the bias gradient is ignored because in bias the gradient will be de delta itself
+                gradient = delta_output_layer * last_a[1:]
+
+                # Update output weights
+                self.output_weights[1:] -= gradient * self.learning_rate
+                self.output_weights[0] -= delta_output_layer * self.learning_rate
 
                 # BACKPROPAGATION
                 # Delta hidden = Weight * DeltaOutput * ActivationFunctionDerivative
                 deltas = [delta_output_layer]
-                for layer_number in reversed(range(self.number_hidden_layers)):
-                    delta_hidden = np.dot(self.hidden_weights[1:, layer_number + 1], deltas[0]) * derivative[layer_number + 1]
-                    deltas.insert(0, delta_hidden)
 
-                for layer_number in range(self.number_hidden_layers):
-                    self.hidden_weights[1:, layer_number + 1] += self.learning_rate * deltas[layer_number + 1] * a[layer_number, 1:]
-                    self.hidden_weights[0, layer_number + 1] += self.learning_rate * deltas[layer_number + 1]
+                delta_first_reverse_layer = self.hidden_weights * delta_output_layer * derivative[-1]
+                self.hidden_weights += delta_first_reverse_layer * self.learning_rate
+
+                # for layer_number in range(self.number_hidden_layers, 0, -1):
+                #     delta_hidden = self.hidden_weights[1:, layer_number] * delta_output_layer * derivative[layer_number]
+                #     deltas.insert(0, delta_hidden)
+                #
+                #     gradient_hidden = delta_hidden * a[layer_number - 1]
+                #
+                #     self.hidden_weights[1:, layer_number] -= gradient_hidden * self.learning_rate
+                #     self.hidden_weights[0, layer_number] -= delta_hidden * self.learning_rate
 
                 errors += loss_function ** 2
 
