@@ -29,23 +29,17 @@ class MLP:
 
         self.number_of_samples, self.number_of_features = training_sample.shape
 
-        # Randomize weights for hidden layer
-        # 3 rows x 2 columns, if hidden layer = 1. rows will be number of inputs + bias and columns will be number hidden layers + 1
-        # first column is weights between inputs and hidden layer
-        # second column is weights between hidden layer and output layer
-        # the +1 is for bias
-        self.hidden_weights = np.random.rand(self.number_of_features + 1, self.number_hidden_layers + 1) - 1
+        self.weights = []
 
-        # Randomize weights for output layer
-        # The number of weights is the number of neurons at last hidden layer + 1 bias
-        self.output_weights = np.random.rand(self.number_of_neurons + 1) - 1
+        # Xavier (Glorot) initialization
+        for layer_number in range(self.number_hidden_layers):
+            self.weights.append(np.random.rand(self.number_of_neurons, self.number_of_features + 1) - 1)
+
+        self.weights.append(np.random.rand(1, self.number_of_features + 1) - 1)
 
     @staticmethod
     def sigmoid(z):
         return 1 / (1 + np.exp(-z))
-
-    # def sigmoid_derivative(self, z):
-    #     return self.sigmoid(z) * (1 - self.sigmoid(z))
 
     @staticmethod
     def sigmoid_derivative(a):
@@ -54,9 +48,9 @@ class MLP:
     def training(self):
         iteration = 0
 
-        while (self.i_epoch < self.epochs) or (self.converged is True):
+        while self.i_epoch < self.epochs and not self.converged:
 
-            errors = 0
+            squared_errors = 0
             self.i_epoch += 1
 
             for inputs, label in zip(self.training_sample, self.class_samples):
@@ -68,7 +62,7 @@ class MLP:
                 derivative = np.ones((self.number_hidden_layers, self.number_of_features))
 
                 for layer_number in range(0, self.number_hidden_layers):
-                    z_array = self.hidden_weights.T.dot(a[layer_number])
+                    z_array = self.weights[layer_number].dot(a[layer_number])
                     a_array = self.sigmoid(z_array)
                     a = np.vstack((a, np.insert(a_array, 0, 1)))
 
@@ -76,15 +70,15 @@ class MLP:
                     derivative = np.vstack((derivative, a_derivative))
 
                 # calculate output weights
-                last_a = a[-1]
-                last_derivative = derivative[-1]
-                z_output = self.output_weights.T.dot(last_a)
+                z_output = self.weights[-1].dot(a[-1])
                 a_output = self.sigmoid(z_output)
 
-                y_predict = a_output
+                y_predict = a_output[0]
 
                 # Error
                 loss_function = label - y_predict
+
+                squared_errors += loss_function ** 2
 
                 # Delta output = loss_function * ActivationFunctionDerivative
                 # Delta is a measure of error in a specific layer (in output layer in this case)
@@ -92,45 +86,37 @@ class MLP:
                 # The Activation Derivative function is how sensitive a neuron's output is relative to weights
                 delta_output_layer = loss_function * self.sigmoid_derivative(y_predict)
 
-                # Gradient will be a vector that indicates the direction and magnitude to maximize the erro
+                # Gradient will be a vector that indicates the direction and magnitude to maximize the error
                 # This is why we decrease the gradient when we are updating the weights
                 # the bias gradient is ignored because in bias the gradient will be de delta itself
-                gradient = delta_output_layer * last_a[1:]
+                gradient = delta_output_layer * a[-1]
 
-                # Update output weights
-                self.output_weights[1:] -= gradient * self.learning_rate
-                self.output_weights[0] -= delta_output_layer * self.learning_rate
+                # Update output weights (The output weights will be the last weights in the weights array)
+                # The bias will be the same value of delta_output_layer
+                self.weights[-1] -= gradient * self.learning_rate
 
                 # BACKPROPAGATION
-                # Delta hidden = Weight * DeltaOutput * ActivationFunctionDerivative
-                deltas = [delta_output_layer]
+                # Delta output = loss_function * ActivationFunctionDerivative
+                # Delta hidden before output layer = Weight * DeltaOutput * ActivationFunctionDerivative
+                # Delta hidden = Weight * DeltaNextLayer * ActivationFunctionDerivative
+                next_deltas = [delta_output_layer]
 
                 for layer_number in range(self.number_hidden_layers, 0, -1):
-                    # If is the hidden layer with output layer
-                    if layer_number == self.number_hidden_layers:
-                        delta_hidden = self.output_weights[1:] * delta_output_layer * derivative[-1]
-                    else:
-                        delta_hidden = self.hidden_weights[1:, layer_number] * deltas[layer_number - 1] * derivative[layer_number]
 
-                    deltas.insert(0, delta_hidden)
+                    delta_hidden = self.weights[layer_number][0, 1:] * next_deltas[-1] * derivative[layer_number]
+                    next_deltas.insert(0, delta_hidden)
 
-                    gradient_hidden = deltas[-1] * a[layer_number - 1]
+                    gradient_hidden = next_deltas[-1] * a[layer_number - 1]
 
-                    self.hidden_weights[1:, layer_number] -= gradient_hidden[1:] * self.learning_rate
-                    self.hidden_weights[0, layer_number] -= gradient_hidden[0] * self.learning_rate
+                    self.weights[layer_number - 1] -= gradient_hidden * self.learning_rate
 
-                errors += loss_function ** 2
-
-                # Check convergence
-            mse = errors / self.number_of_samples
+            mse = squared_errors / self.number_of_samples
             if mse < 1e-5:
                 self.converged = True
 
             iteration += 1
             if iteration % 10 == 0:
                 print(f'Epoch {self.i_epoch}, MSE: {mse}')
-
-        print('Training completed.')
 
 
 # Press the green button in the gutter to run the script.
@@ -143,5 +129,5 @@ if __name__ == '__main__':
     training = df.iloc[:, 0:-1].values
     labels = df.iloc[:, -1].values
 
-    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.0001, epochs=1000)
+    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.01, epochs=100)
     model.training()
