@@ -129,5 +129,5 @@ if __name__ == '__main__':
     training = df.iloc[:, 0:-1].values
     labels = df.iloc[:, -1].values
 
-    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.0001, epochs=100)
+    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.001, epochs=1000)
     model.training()
