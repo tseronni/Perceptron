@@ -59,7 +59,7 @@ class MLP:
                 a = np.ones((self.number_hidden_layers, self.number_of_features + 1))
                 a[0] = np.insert(inputs, 0, 1)
 
-                derivative = np.ones((self.number_hidden_layers, self.number_of_features))
+                derivative = np.ones((self.number_hidden_layers, self.number_of_features + 1))
 
                 for layer_number in range(0, self.number_hidden_layers):
                     z_array = self.weights[layer_number].dot(a[layer_number])
@@ -67,7 +67,7 @@ class MLP:
                     a = np.vstack((a, np.insert(a_array, 0, 1)))
 
                     a_derivative = self.sigmoid_derivative(a_array)
-                    derivative = np.vstack((derivative, a_derivative))
+                    derivative = np.vstack((derivative, np.insert(a_derivative, 0, 1)))
 
                 # calculate output weights
                 z_output = self.weights[-1].dot(a[-1])
@@ -99,14 +99,14 @@ class MLP:
                 # Delta output = loss_function * ActivationFunctionDerivative
                 # Delta hidden before output layer = Weight * DeltaOutput * ActivationFunctionDerivative
                 # Delta hidden = Weight * DeltaNextLayer * ActivationFunctionDerivative
-                next_deltas = [delta_output_layer]
+                deltas = [delta_output_layer]
 
                 for layer_number in range(self.number_hidden_layers, 0, -1):
 
-                    delta_hidden = self.weights[layer_number][0, 1:] * next_deltas[-1] * derivative[layer_number]
-                    next_deltas.insert(0, delta_hidden)
+                    delta_hidden = self.weights[layer_number] * deltas[-1] * derivative[layer_number]
+                    deltas.append([delta_hidden])
 
-                    gradient_hidden = next_deltas[-1] * a[layer_number - 1]
+                    gradient_hidden = delta_hidden * a[layer_number - 1]
 
                     self.weights[layer_number - 1] -= gradient_hidden * self.learning_rate
 
@@ -129,5 +129,5 @@ if __name__ == '__main__':
     training = df.iloc[:, 0:-1].values
     labels = df.iloc[:, -1].values
 
-    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.01, epochs=100)
+    model = MLP(training_sample=training, class_samples=labels, learning_rate=0.0001, epochs=100)
     model.training()
