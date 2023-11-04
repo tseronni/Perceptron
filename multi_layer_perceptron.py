@@ -31,7 +31,6 @@ class MLP:
 
         self.weights = []
 
-        # Xavier (Glorot) initialization
         for layer_number in range(self.number_hidden_layers):
             self.weights.append(np.random.rand(self.number_of_neurons, self.number_of_features + 1) - 1)
 
